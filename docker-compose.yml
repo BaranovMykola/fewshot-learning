@@ -1,0 +1,16 @@
+version: '2.3'
+services:
+  jupyterlab-scientific:
+    image: jupyterlab-scientific
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /media/mbaranov/:/Disk
+      - $PWD:/Workdir
+    environment:
+      - DISPLAY
+      - QT_X11_NO_MITSHM=1
+      - NVIDIA_VISIBLE_DEVICES=all
+    ports:
+      - '8778:8888'
+    privileged: true
+    runtime: nvidia
