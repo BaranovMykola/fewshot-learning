@@ -3,6 +3,7 @@
     <words>
       <w>fewshots</w>
       <w>imagenet</w>
+      <w>keras</w>
     </words>
   </dictionary>
 </component>
