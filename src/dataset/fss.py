@@ -85,6 +85,7 @@ class FssDataset:
     @staticmethod
     def create(df, s):
         tf_q = FssDataset._rgb_mask(df.in_file.to_numpy(), df.out_file.to_numpy())
+        tf_q = tf_q.map(lambda x: tf.expand_dims(x, axis=0))
 
         s_rgb = [f'support_rgb_{x}' for x in range(s)]
         s_mask = [f'support_mask_{x}' for x in range(s)]
