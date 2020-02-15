@@ -1,3 +1,5 @@
+from typing import Tuple, Optional
+
 import tensorflow as tf
 import numpy as np
 import pandas as pd
@@ -5,61 +7,63 @@ import pandas as pd
 
 class FssDataset:
 
-    def __init__(self, csv_path, test_classes_frac=0.2):
+    def __init__(self, csv_path: str, test_classes_frac: float = 0.2):
         np.random.seed(478)
         self.df = pd.read_csv(csv_path).sample(frac=1)
 
+        # Take test classes
         classes_id = np.unique(self.df.class_id.to_numpy())
         np.random.shuffle(classes_id)
         test_classes = classes_id[:int(len(classes_id)*test_classes_frac)]
 
+        # Split train/test sets
         self.test_df = self.df[self.df.class_id.isin(test_classes)]
         self.train_df = self.df[~self.df.class_id.isin(test_classes)]
 
-        self.test_q, self.test_s = FssDataset.q_s_set(self.test_df)
-        self.train_q, self.train_s = FssDataset.q_s_set(self.train_df)
+        self.support_size: Optional[int] = None
 
-        self.test = FssDataset.generate_raw_df(self.test_q, self.test_s)
-        self.train = FssDataset.generate_raw_df(self.train_q, self.train_s)
+        # Split query/support set
+        self.test_q, self.test_s = FssDataset.split_query_support_set(self.test_df)
+        self.train_q, self.train_s = FssDataset.split_query_support_set(self.train_df)
+
+        # Generate unrolled sets
+        self.test_unrolled_df, self.support_size_test = FssDataset.generate_df_with_support_samples(self.test_q,
+                                                                                                self.test_s)
+        self.train_unrolled_df, self.support_size_train = FssDataset.generate_df_with_support_samples(self.train_q,
+                                                                                              self.train_s)
+
+    @property
+    def train(self):
+        return FssDataset.create(self.test_unrolled_df, self.support_size_train)
+
+    @property
+    def test(self):
+        return FssDataset.create(self.train_unrolled_df, self.support_size_test)
 
     @staticmethod
-    def generate_raw_df(q, s):
-        support_df = []
-        items = None
-        for idx, i in q.iterrows():
+    def generate_df_with_support_samples(query_df: pd.DataFrame, support_df: pd.DataFrame) -> Tuple[pd.DataFrame, int]:
+        support_df_unrolled = []
+        items = []
+        for idx, i in query_df.iterrows():
             class_id = i.class_id
-            support_set = s[s.class_id == class_id]
+            support_set = support_df[support_df.class_id == class_id]
             support_in = support_set.in_file.to_numpy()
             support_out = support_set.out_file.to_numpy()
             support = np.concatenate([support_in, support_out])
-            support_df.append(support)
-            items = items or int(len(support)/2)
+            support_df_unrolled.append(support)
+            # items = items or int(len(support)/2)
+            items.append(len(support)//2)
+
+        items = np.min(items)
 
         columns = [f'support_rgb_{x}' for x in range(items)] + [f'support_mask_{x}' for x in range(items)]
-        support_df = pd.DataFrame(support_df, index=q.index, columns=columns)
-        df = pd.merge(q, support_df, left_index=True, right_index=True)
-        return df
-
-    def test_support(self, class_id):
-        return FssDataset._support(self.test_s, class_id)
-
-    def train_support(self, class_id):
-        return FssDataset._support(self.train_s, class_id)
+        support_df_unrolled = pd.DataFrame(support_df_unrolled, index=query_df.index, columns=columns)
+        df = pd.merge(query_df, support_df_unrolled, left_index=True, right_index=True)
+        df = df.sample(frac=1)
+        return df, items
 
     @staticmethod
-    def _support(s, class_id):
-        ss = s[s.class_id == class_id]
-
-        if len(ss) == 0:
-            raise RuntimeError(f'No support set for given class id: {class_id}')
-
-        tfss = FssDataset.create(ss, 5)
-        tfss = tfss.batch(len(ss))
-        support_set = next(iter(tfss))
-        return support_set
-
-    @staticmethod
-    def q_s_set(df, s_num=5):
+    def split_query_support_set(df: pd.DataFrame, s_num: int = 5) -> Tuple[pd.DataFrame, pd.DataFrame]:
         classes_id = np.unique(df.class_id)
 
         s = None
@@ -75,46 +79,45 @@ class FssDataset:
         return q, s
 
     @staticmethod
-    def _rgb_mask(rgb_p, mask_p):
+    def _rgb_mask(rgb_p: np.ndarray, mask_p: np.ndarray) -> tf.data.Dataset:
         rgb = tf.data.Dataset.from_tensor_slices(rgb_p).map(FssDataset.read_rgb)
         mask = tf.data.Dataset.from_tensor_slices(mask_p).map(FssDataset.read_mask)
         sample = tf.data.Dataset.zip((rgb, mask)).map(FssDataset.concat)
         return sample
 
-
     @staticmethod
-    def create(df, s):
-        tf_q = FssDataset._rgb_mask(df.in_file.to_numpy(), df.out_file.to_numpy())
+    def create(unrolled_df: pd.DataFrame, support_size: int) -> tf.data.Dataset:
+        tf_q = FssDataset._rgb_mask(unrolled_df.in_file.to_numpy(), unrolled_df.out_file.to_numpy())
         tf_q = tf_q.map(lambda x: tf.expand_dims(x, axis=0))
 
-        s_rgb = [f'support_rgb_{x}' for x in range(s)]
-        s_mask = [f'support_mask_{x}' for x in range(s)]
-        s_rgb = [df[x] for x in s_rgb]
-        s_mask = [df[x] for x in s_mask]
+        s_rgb = [f'support_rgb_{x}' for x in range(support_size)]
+        s_mask = [f'support_mask_{x}' for x in range(support_size)]
+        s_rgb = [unrolled_df[x] for x in s_rgb]
+        s_mask = [unrolled_df[x] for x in s_mask]
         s_f = zip(s_rgb, s_mask)
         tf_s = [FssDataset._rgb_mask(r, m) for r, m in s_f]
         tf_s = tf.data.Dataset.zip(tuple(tf_s)).map(lambda *x: tf.stack(x))
 
-        classname = tf.data.Dataset.from_tensor_slices(df['class'].to_numpy())
-        class_id = tf.data.Dataset.from_tensor_slices(df.class_id.to_numpy())
+        classname = tf.data.Dataset.from_tensor_slices(unrolled_df['class'].to_numpy())
+        class_id = tf.data.Dataset.from_tensor_slices(unrolled_df.class_id.to_numpy())
         ds = tf.data.Dataset.zip((tf_q, classname, class_id, tf_s))
 
         return ds
 
     @staticmethod
-    def read_rgb(path):
+    def read_rgb(path: tf.Tensor) -> tf.Tensor:
         file = tf.io.read_file(path)
         image = tf.io.decode_jpeg(file, channels=3)
         image = tf.image.resize(image, (224, 224))
         return image
 
     @staticmethod
-    def read_mask(path):
+    def read_mask(path: tf.Tensor) -> tf.Tensor:
         file = tf.io.read_file(path)
         image = tf.io.decode_png(file, channels=1)
         image = tf.image.resize(image, (224, 224))
         return image
 
     @staticmethod
-    def concat(rgb, mask):
+    def concat(rgb: tf.Tensor, mask: tf.Tensor) -> tf.Tensor:
         return tf.concat([rgb, mask], axis=-1)
