@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 
+
 def register_colormap():
     n_colors = 256
 
