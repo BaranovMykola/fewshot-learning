@@ -87,8 +87,12 @@ class FssDataset:
 
     @staticmethod
     def create(unrolled_df: pd.DataFrame, support_size: int) -> tf.data.Dataset:
-        tf_q = FssDataset._rgb_mask(unrolled_df.in_file.to_numpy(), unrolled_df.out_file.to_numpy())
+        # tf_q = FssDataset._rgb_mask(unrolled_df.in_file.to_numpy(), unrolled_df.out_file.to_numpy())
+        tf_q = tf.data.Dataset.from_tensor_slices(unrolled_df.in_file.to_numpy()).map(FssDataset.read_rgb)
+        tf_q = tf_q.map(lambda x: tf.concat([x, tf.zeros([224, 224, 1], tf.float32)], axis=-1))
+
         tf_q = tf_q.map(lambda x: tf.expand_dims(x, axis=0))
+        label_mask = tf.data.Dataset.from_tensor_slices(unrolled_df.out_file.to_numpy()).map(FssDataset.read_mask)
 
         s_rgb = [f'support_rgb_{x}' for x in range(support_size)]
         s_mask = [f'support_mask_{x}' for x in range(support_size)]
@@ -100,7 +104,7 @@ class FssDataset:
 
         classname = tf.data.Dataset.from_tensor_slices(unrolled_df['class'].to_numpy())
         class_id = tf.data.Dataset.from_tensor_slices(unrolled_df.class_id.to_numpy())
-        ds = tf.data.Dataset.zip((tf_q, classname, class_id, tf_s))
+        ds = tf.data.Dataset.zip((tf_q, tf_s, label_mask, classname, class_id))
 
         return ds
 
@@ -108,14 +112,14 @@ class FssDataset:
     def read_rgb(path: tf.Tensor) -> tf.Tensor:
         file = tf.io.read_file(path)
         image = tf.io.decode_jpeg(file, channels=3)
-        image = tf.image.resize(image, (224, 224))
+        image = tf.image.resize(image, (224, 224))/225
         return image
 
     @staticmethod
     def read_mask(path: tf.Tensor) -> tf.Tensor:
         file = tf.io.read_file(path)
         image = tf.io.decode_png(file, channels=1)
-        image = tf.image.resize(image, (224, 224))
+        image = tf.image.resize(image, (224, 224))/255
         return image
 
     @staticmethod

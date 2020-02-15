@@ -16,7 +16,9 @@ class Model(tf.keras.Model):
                                                  weights=Model.KERAS_VGG16_WEIGHTS,
                                                  pooling=None)
 
-        self.vgg16_layers = self.vgg16.layers
+        self.layer0 = tf.keras.layers.Conv2D(filters=3, kernel_size=(3,3), padding='same')
+        self.layer1 = tf.keras.layers.Conv2D(filters=64, kernel_size=(3,3), padding='same')
+        self.vgg16_layers = [self.layer0, self.layer1] + self.vgg16.layers[2:]
         self.upsample = tf.keras.layers.UpSampling2D(size=(2, 2), interpolation='bilinear')
         self.up1 = tf.keras.Sequential([
             ConvBlock(512, (3, 3)),
@@ -43,18 +45,21 @@ class Model(tf.keras.Model):
             tf.keras.layers.Conv2D(filters=1, kernel_size=(1, 1), padding='same')
         ])
 
+    # @tf.function
     def call(self, inputs, training=None, mask=None):
         q, s = inputs
         q_features, _ = self.process_set(q)
         s_features, unet_features = self.process_set(s)
-
-
+        #
+        #
         features = tf.concat([q_features, s_features], axis=-1)
-        # mask = self.upsample(features)
-        mask = self.decode(features, unet_features)
+        # # mask = self.upsample(features)
+        __mask = self.decode(features, unet_features)
 
-        return features
+        # return mask
+        return __mask
 
+    # @tf.function
     def decode(self, input, unet_features):
         x = self.up1(input)
         x = self.upsample(x)
@@ -76,29 +81,50 @@ class Model(tf.keras.Model):
         return x
 
     #  TODO: Optimize with optional unet processing
+    # @tf.function
     def process_set(self, batch):
 
-        feature_list = []
-        unet_features_list = []
-        for set_sample in batch:
-            features, unet_features = self.encode(set_sample)
-            unet_features = [tf.reduce_sum(x, axis=0) for x in unet_features]
-            unet_features_list.append(unet_features)
-            features = tf.reduce_sum(features, axis=0)
-            feature_list.append(features)
+        # feature_list = []
+        # unet_features_list = []
+        features, unet_features_list = tf.map_fn(self.t1, batch, dtype=(tf.float32, [tf.float32, tf.float32,
+                                                                                     tf.float32, tf.float32,
+                                                            tf.float32]))
+        # for set_sample in batch:
+        #     self.t1(set_sample)
 
-        concated_features = tf.stack(feature_list, axis=0)
+        concated_features = tf.stack(features, axis=0)
 
-        f = []
-        arr = np.array(unet_features_list)
-        for i in range(len(Model.UNET_SHORTCUTS)):
-            f.append(tf.stack(arr[:, i], axis=0))
+        # f = []
+        # arr = np.array(unet_features_list)
+        # for i in range(len(Model.UNET_SHORTCUTS)):
+        #     f.append(tf.stack(arr[:, i], axis=0))
+
+        # res = [[tf.stack(t, axis=0) for t in l] for l in unet_features_list]
+        # f = lambda x: x[0]
+        ress = []
+        for i in range(5):
+            res = tf.map_fn(lambda x: x[i], unet_features_list, dtype=tf.float32)
+            ress.append(res)
 
 
         # concated_unet_features = [tf.stack(x, axis=0) for x in unet_features_list]
-        return concated_features, f
+        # return concated_features, f
+        return concated_features, ress
+
+    # @tf.function
+    # def t2(self, i):
+    #     return x[i]
+
+    @tf.function
+    def t1(self, set_sample):
+        features, unet_features = self.encode(set_sample)
+        unet_features = [tf.reduce_sum(x, axis=0) for x in unet_features]
+        features = tf.reduce_sum(features, axis=0)
+        return features, unet_features
+        # return features, features
 
     #  TODO: Optimize with optional unet processing
+    @tf.function
     def encode(self, inputs):
         unet_features = []
         x = inputs
@@ -116,7 +142,7 @@ class ConvBlock(tf.keras.layers.Layer):
         super().__init__(**kwargs)
 
         self.conv = tf.keras.layers.Conv2D(filters=filters, kernel_size=kernel_size, padding='same')
-        self.bn = tf.keras.layers.BatchNormalization(momentum=1)
+        self.bn = tf.keras.layers.BatchNormalization(momentum=1.0)
         self.act = tf.keras.activations.relu
 
     def call(self, inputs, **kwargs):
