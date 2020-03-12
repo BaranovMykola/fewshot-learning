@@ -16,8 +16,11 @@ class Model(tf.keras.Model):
                                                  weights=Model.KERAS_VGG16_WEIGHTS,
                                                  pooling=None)
 
-        self.layer0 = tf.keras.layers.Conv2D(filters=3, kernel_size=(3,3), padding='same')
-        self.layer1 = tf.keras.layers.Conv2D(filters=64, kernel_size=(3,3), padding='same')
+        self.layer0 = tf.keras.layers.Conv2D(filters=3, kernel_size=(3,3), padding='same',
+                                             activation=tf.keras.activations.relu)
+        self.layer1 = tf.keras.layers.Conv2D(filters=64, kernel_size=(3,3), padding='same',
+                                             activation=tf.keras.activations.relu)
+
         self.vgg16_layers = [self.layer0, self.layer1] + self.vgg16.layers[2:]
         self.upsample = tf.keras.layers.UpSampling2D(size=(2, 2), interpolation='bilinear')
         self.up1 = tf.keras.Sequential([
@@ -42,7 +45,9 @@ class Model(tf.keras.Model):
         ])
         self.up6 = tf.keras.Sequential([
             ConvBlock(61, (3, 3)),
-            tf.keras.layers.Conv2D(filters=1, kernel_size=(1, 1), padding='same')
+            tf.keras.layers.Conv2D(filters=1, kernel_size=(1, 1), padding='same',
+                                   activation=tf.keras.activations.sigmoid
+                                   )
         ])
 
     # @tf.function
@@ -62,6 +67,7 @@ class Model(tf.keras.Model):
     # @tf.function
     def decode(self, input, unet_features):
         x = self.up1(input)
+        # tf.print(tf.reduce_mean(x))
         x = self.upsample(x)
         x = tf.concat([x, unet_features[-1]], axis=-1)
         x = self.up2(x)
@@ -77,6 +83,7 @@ class Model(tf.keras.Model):
         x = self.upsample(x)
         x = tf.concat([x, unet_features[-5]], axis=-1)
         x = self.up6(x)
+        x = tf.squeeze(x)
 
         return x
 
@@ -129,8 +136,9 @@ class Model(tf.keras.Model):
         unet_features = []
         x = inputs
         for idx, layer in enumerate(self.vgg16_layers):
+            print(x.shape)
             x = layer(x)
-            print(idx, x.shape)
+            # print(idx, x.shape)
             if idx in Model.UNET_SHORTCUTS:
                 unet_features.append(x)
         return x, unet_features

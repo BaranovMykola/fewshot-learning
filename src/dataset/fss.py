@@ -34,11 +34,11 @@ class FssDataset:
 
     @property
     def train(self):
-        return FssDataset.create(self.test_unrolled_df, self.support_size_train)
+        return FssDataset.create(self.train_unrolled_df, self.support_size_train)
 
     @property
     def test(self):
-        return FssDataset.create(self.train_unrolled_df, self.support_size_test)
+        return FssDataset.create(self.test_unrolled_df, self.support_size_test)
 
     @staticmethod
     def generate_df_with_support_samples(query_df: pd.DataFrame, support_df: pd.DataFrame) -> Tuple[pd.DataFrame, int]:
@@ -93,6 +93,7 @@ class FssDataset:
 
         tf_q = tf_q.map(lambda x: tf.expand_dims(x, axis=0))
         label_mask = tf.data.Dataset.from_tensor_slices(unrolled_df.out_file.to_numpy()).map(FssDataset.read_mask)
+        label_mask = label_mask.map(tf.squeeze)
 
         s_rgb = [f'support_rgb_{x}' for x in range(support_size)]
         s_mask = [f'support_mask_{x}' for x in range(support_size)]
@@ -120,6 +121,8 @@ class FssDataset:
         file = tf.io.read_file(path)
         image = tf.io.decode_png(file, channels=1)
         image = tf.image.resize(image, (224, 224))/255
+        image = tf.where(image > 0.5, 1, 0)
+        image = tf.cast(image, tf.float32)
         return image
 
     @staticmethod
