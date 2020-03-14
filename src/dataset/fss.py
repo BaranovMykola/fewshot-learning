@@ -14,7 +14,7 @@ class FssDataset:
         # Take test classes
         classes_id = np.unique(self.df.class_id.to_numpy())
         np.random.shuffle(classes_id)
-        test_classes = classes_id[:int(len(classes_id)*test_classes_frac)]
+        test_classes = classes_id[:int(len(classes_id) * test_classes_frac)]
 
         # Split train/test sets
         self.test_df = self.df[self.df.class_id.isin(test_classes)]
@@ -28,17 +28,23 @@ class FssDataset:
 
         # Generate unrolled sets
         self.test_unrolled_df, self.support_size_test = FssDataset.generate_df_with_support_samples(self.test_q,
-                                                                                                self.test_s)
+                                                                                                    self.test_s)
         self.train_unrolled_df, self.support_size_train = FssDataset.generate_df_with_support_samples(self.train_q,
-                                                                                              self.train_s)
+                                                                                                      self.train_s)
 
-    @property
-    def train(self):
-        return FssDataset.create(self.train_unrolled_df, self.support_size_train)
+    def train(self, for_fit: bool = False) -> tf.data.Dataset:
+        return FssDataset._dataset_from_unrolled_df(self.train_unrolled_df, self.support_size_train, for_fit)
 
-    @property
-    def test(self):
-        return FssDataset.create(self.test_unrolled_df, self.support_size_test)
+    def test(self, for_fit: bool = False):
+        return FssDataset._dataset_from_unrolled_df(self.test_unrolled_df, self.support_size_test, for_fit)
+
+    @staticmethod
+    def _dataset_from_unrolled_df(unrolled_df: pd.DataFrame, support_size: int, for_fit: bool) -> tf.data.Dataset:
+        dataset = FssDataset.create(unrolled_df, support_size)
+        if for_fit:
+            dataset = dataset.map(FssDataset.reshape)
+
+        return dataset
 
     @staticmethod
     def generate_df_with_support_samples(query_df: pd.DataFrame, support_df: pd.DataFrame) -> Tuple[pd.DataFrame, int]:
@@ -51,8 +57,7 @@ class FssDataset:
             support_out = support_set.out_file.to_numpy()
             support = np.concatenate([support_in, support_out])
             support_df_unrolled.append(support)
-            # items = items or int(len(support)/2)
-            items.append(len(support)//2)
+            items.append(len(support) // 2)
 
         items = np.min(items)
 
@@ -87,7 +92,6 @@ class FssDataset:
 
     @staticmethod
     def create(unrolled_df: pd.DataFrame, support_size: int) -> tf.data.Dataset:
-        # tf_q = FssDataset._rgb_mask(unrolled_df.in_file.to_numpy(), unrolled_df.out_file.to_numpy())
         tf_q = tf.data.Dataset.from_tensor_slices(unrolled_df.in_file.to_numpy()).map(FssDataset.read_rgb)
         tf_q = tf_q.map(lambda x: tf.concat([x, tf.zeros([224, 224, 1], tf.float32)], axis=-1))
 
@@ -113,14 +117,14 @@ class FssDataset:
     def read_rgb(path: tf.Tensor) -> tf.Tensor:
         file = tf.io.read_file(path)
         image = tf.io.decode_jpeg(file, channels=3)
-        image = tf.image.resize(image, (224, 224))/225
+        image = tf.image.resize(image, (224, 224)) / 225
         return image
 
     @staticmethod
     def read_mask(path: tf.Tensor) -> tf.Tensor:
         file = tf.io.read_file(path)
         image = tf.io.decode_png(file, channels=1)
-        image = tf.image.resize(image, (224, 224))/255
+        image = tf.image.resize(image, (224, 224)) / 255
         image = tf.where(image > 0.5, 1, 0)
         image = tf.cast(image, tf.float32)
         return image
@@ -128,3 +132,7 @@ class FssDataset:
     @staticmethod
     def concat(rgb: tf.Tensor, mask: tf.Tensor) -> tf.Tensor:
         return tf.concat([rgb, mask], axis=-1)
+
+    @staticmethod
+    def reshape(q, s, m, _, __):
+        return (q, s), m
