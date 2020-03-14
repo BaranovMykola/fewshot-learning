@@ -72,19 +72,31 @@ class Model(tf.keras.Model):
                                    activation=tf.keras.activations.sigmoid
                                    )
         ])
-        #
+
     def call(self, inputs, training=None, mask=None):
         q, s = inputs
         # a = tf.reduce_mean(q*self.w)
         # b = tf.reduce_mean(s*self.w)
-        f, u = self.encode(q[0])
+        fq, _ = self.process_set(q, training)
+        fs, us = self.process_set(s, training)
+        fc = tf.concat((fq, fs), axis=-1)
+
+        m = self.decode(fc, us, training)
         # tf.print(tf.reduce_mean(f), tf.reduce_mean(u[0]))
         # tf.print(u[0])
         # a = tf.reduce_mean(f)
-        m = self.decode(f, u, training)
-        a = m
+        # m = self.decode(f, u, training)
+        # a = m
         # a = tf.reduce_mean(m)
-        return a
+        return m
+
+    @tf.function
+    def process_set(self, batch, training):
+        f, u = tf.map_fn(self.encode, batch, dtype=(tf.float32, [tf.float32, tf.float32, tf.float32, tf.float32,
+                                                                 tf.float32]))
+        _u = [tf.reduce_sum(x, axis=1) for x in u]
+        _f = tf.reduce_sum(f, axis=1)
+        return _f, _u
 
     @tf.function
     def encode(self, inputs):
@@ -126,7 +138,7 @@ def mod(x):
     # x = x.shuffle(24)
     x = x.batch(bs)
     x = x.map(resh)
-    x = x.take(20)
+    # x = x.take(20)
     x = x.prefetch(1)
     x = x.repeat()
     return x
@@ -146,13 +158,38 @@ class MinLoss(tf.keras.losses.Loss):
         return l
 
 
-(q,s), m = next(iter(train))
+class MyMetric(tf.keras.metrics.Metric):
 
-model.compile(loss=MinLoss(), optimizer=tf.keras.optimizers.Adam(learning_rate=0.000001))
-model.fit(train,
-          steps_per_epoch=20,
-          validation_steps=20,
-          validation_data=train,
-          epochs=5)
-pass
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        y_pred = tf.where(y_pred > 0.5, 1.0, 0.0)
+        tf.keras.metrics.binary_accuracy()
+        pass
+
+    def result(self):
+        pass
+
+
+# (q,s), m = next(iter(train))
+#
+# model.compile(loss=tf.losses.binary_crossentropy, optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+#               metrics=[tf.keras.metrics.binary_accuracy])
+#
+# q_shape = tuple(q.shape)
+# s_shape = tuple(s.shape)
+# model.build(input_shape=[q_shape, s_shape])
+#
+# # model.load_weights('./test_w.h5')
+# model.fit(train,
+#           # steps_per_epoch=200,
+#           # validation_steps=20,
+#           steps_per_epoch=len(dataset.train_unrolled_df)//bs,
+#           validation_steps=len(dataset.test_unrolled_df)//bs,
+#           validation_data=test,
+#           epochs=10,
+#           callbacks=[tf.keras.callbacks.TensorBoard(log_dir='./tf_log')])
+# model.save_weights('./test_w.h5')
+# pass
+#
