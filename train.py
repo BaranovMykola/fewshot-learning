@@ -5,8 +5,10 @@ import time
 from typing import Any
 
 import tensorflow as tf
+import tensorflow_addons as tfa
+tf.config.experimental_run_functions_eagerly(True)
 
-from src.model import Model
+from src.model import Model, TbCallback, IoU
 from src.utils import assert_gpu
 from src.dataset.fss import FssDataset
 
@@ -38,25 +40,29 @@ def main(args):
         dataset: FssDataset = pickle.load(f)
     model = Model()
     train = prepare_set(dataset.train(for_fit=True))
-    test = prepare_set(dataset.train(for_fit=True))
+    test_raw = dataset.test(for_fit=False)
+    test = prepare_set(dataset.test(for_fit=True))
 
     (q_shape, s_shape), m_shape = dataset_shape(train)
     model.compile(loss=tf.losses.binary_crossentropy, optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
-                  metrics=[tf.keras.metrics.Precision(thresholds=0.5), tf.keras.metrics.Recall(thresholds=0.5)])
+                  metrics=[tf.keras.metrics.Precision(thresholds=0.5), tf.keras.metrics.Recall(thresholds=0.5),
+                           IoU()])
     model.build(input_shape=[q_shape, s_shape])
 
-    tb_cb = tf.keras.callbacks.TensorBoard(log_dir=get_logdir('./tensorboard'),
+    logdir = get_logdir('./tensorboard')
+    tb_cb = tf.keras.callbacks.TensorBoard(log_dir=logdir,
                                            histogram_freq=1,
                                            write_images=True,
                                            embeddings_freq=1)
+    mcb = TbCallback(model, test_raw.take(6), logdir)
     model.fit(train,
-              steps_per_epoch=20,
-              validation_steps=20,
+              steps_per_epoch=10,
+              validation_steps=10,
               # steps_per_epoch=len(dataset.train_unrolled_df) // batch_size,
               # validation_steps=len(dataset.test_unrolled_df) // batch_size,
               validation_data=test,
-              epochs=10,
-              callbacks=[tb_cb])
+              epochs=2,
+              callbacks=[tb_cb, mcb])
 
     return 0
 
