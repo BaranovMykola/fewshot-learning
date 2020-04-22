@@ -50,17 +50,17 @@ def main(args):
     model.build(input_shape=[q_shape, s_shape])
 
     logdir = get_logdir('./tensorboard')
-    tb_cb = tf.keras.callbacks.TensorBoard(log_dir=logdir,
-                                           histogram_freq=1,
-                                           write_images=True,
-                                           embeddings_freq=1)
+    tb_cb = tf.keras.callbacks.TensorBoard(log_dir=logdir)
+                                           # histogram_freq=1,
+                                           # write_images=True,
+                                           # embeddings_freq=1)
     mcb = TbCallback(model, test_raw, logdir, steps=5)
     # print(next(iter(test_raw))[0].shape)
     model.fit(train,
-              # steps_per_epoch=10,
-              # validation_steps=10,
-              steps_per_epoch=len(dataset.train_unrolled_df) // batch_size,
-              validation_steps=len(dataset.test_unrolled_df) // batch_size,
+              steps_per_epoch=10,
+              validation_steps=10,
+              # steps_per_epoch=len(dataset.train_unrolled_df) // batch_size,
+              # validation_steps=len(dataset.test_unrolled_df) // batch_size,
               validation_data=test,
               epochs=228,
               callbacks=[tb_cb, mcb])

@@ -118,6 +118,7 @@ class FssDataset:
         file = tf.io.read_file(path)
         image = tf.io.decode_jpeg(file, channels=3)
         image = tf.image.resize(image, (224, 224)) / 225
+        image = tf.clip_by_value(image, 0.0, 1.0)
         return image
 
     @staticmethod
