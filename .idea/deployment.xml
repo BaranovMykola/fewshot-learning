@@ -1,14 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" serverName="FssVm" stopOnFirstError="true">
+  <component name="PublishConfigData" autoUpload="Always" serverName="FssVm" stopOnFirstError="true">
     <serverData>
       <paths name="FssVm">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/mbaranov/Research/Fewshot/fewshot-learning" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/home/mbaranov/fewshot-learning" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="pi@192.168.1.17:22">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
     </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
   </component>
 </project>
