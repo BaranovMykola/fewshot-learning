@@ -37,6 +37,7 @@ class TbCallback(tf.keras.callbacks.Callback):
                 show_sample(ax[idx, 1], query[0, 0, :, :, :3], pred_mask[0], classname[0], class_id[0])
 
             plt.savefig(os.path.join(self.root, f'epoch_{epoch}_{s}.png'))
+            plt.close(fig)
 
 
 
