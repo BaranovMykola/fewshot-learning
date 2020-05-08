@@ -2,8 +2,8 @@
 <project version="4">
   <component name="WebServers">
     <option name="servers">
-      <webServer id="c2c0750f-750c-4c45-b5cc-15478394bfee" name="FssVm" url="http://192.168.18.111">
-        <fileTransfer accessType="SFTP" host="192.168.18.111" port="22" sshConfigId="42a652b5-8b65-42cd-a83e-c7d6f51f17a1" sshConfig="FssVm" authAgent="true">
+      <webServer id="c2c0750f-750c-4c45-b5cc-15478394bfee" name="FssVm" url="http://192.168.18.168">
+        <fileTransfer accessType="SFTP" host="192.168.18.168" port="22" sshConfigId="42a652b5-8b65-42cd-a83e-c7d6f51f17a1" sshConfig="FssVm" authAgent="true">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

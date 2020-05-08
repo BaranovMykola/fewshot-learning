@@ -2,7 +2,7 @@
 <project version="4">
   <component name="SshConfigs">
     <configs>
-      <sshConfig authType="OPEN_SSH" host="192.168.18.111" id="42a652b5-8b65-42cd-a83e-c7d6f51f17a1" port="22" customName="FssVm" nameFormat="CUSTOM" username="mbaranov" />
+      <sshConfig authType="OPEN_SSH" host="192.168.18.168" id="42a652b5-8b65-42cd-a83e-c7d6f51f17a1" port="22" customName="FssVm" nameFormat="CUSTOM" username="mbaranov" />
     </configs>
   </component>
 </project>
