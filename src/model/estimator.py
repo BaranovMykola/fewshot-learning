@@ -6,7 +6,7 @@ from typing import Any
 
 import tensorflow as tf
 
-from src.model import IoU, F1Score, TbCallback
+from src.model import IoU, F1Score, SampleVisualizerCallback
 from src.utils import assert_gpu
 
 
@@ -45,10 +45,16 @@ class Estimator:
     @property
     def callbacks(self):
         tb_cb = tf.keras.callbacks.TensorBoard(log_dir=self.logdir)
-        mcb = TbCallback(self.model, self.test_data_raw, self.logdir, steps=5)
-        f1_saver = tf.keras.callbacks.ModelCheckpoint(self.logdir, monitor='val_f1_score', verbose=0, save_best_only=True,
-                                                      save_weights_only=True, mode='max', save_freq='epoch')
-        iou_saver = tf.keras.callbacks.ModelCheckpoint(self.logdir, monitor='val_io_u', verbose=0, save_best_only=True,
+        mcb = SampleVisualizerCallback(self.test_data_raw, self.logdir, steps=5)
+        f1_saver = tf.keras.callbacks.ModelCheckpoint(str(self.logdir),
+                                                      monitor='val_f1_score',
+                                                      verbose=0,
+                                                      save_best_only=True,
+                                                      save_weights_only=True,
+                                                      mode='max',
+                                                      save_freq='epoch')
+        iou_saver = tf.keras.callbacks.ModelCheckpoint(str(self.logdir), monitor='val_io_u', verbose=0,
+                                                       save_best_only=True,
                                                        save_weights_only=True, mode='max', save_freq='epoch')
         return [tb_cb, mcb, f1_saver, iou_saver]
 
@@ -59,8 +65,10 @@ class Estimator:
     def train(self):
         assert_gpu()
         self.model.fit(self.train_data,
-                       steps_per_epoch=len(self.dataset.train_unrolled_df) // self.batch_size,
-                       validation_steps=len(self.dataset.test_unrolled_df) // self.batch_size,
+                       steps_per_epoch=10,
+                       validation_steps=10,
+                       # steps_per_epoch=len(self.dataset.train_unrolled_df) // self.batch_size,
+                       # validation_steps=len(self.dataset.test_unrolled_df) // self.batch_size,
                        validation_data=self.test_data,
                        epochs=228,
                        callbacks=self.callbacks)
@@ -78,7 +86,11 @@ class Estimator:
         return (q.shape, s.shape), m.shape
 
     @staticmethod
-    def get_logdir(root: str) -> str:
+    def get_logdir(root: str) -> Path:
         ts = time.gmtime()
         postfix = time.strftime("%Y-%m-%d_%H:%M:%S", ts)
-        return os.path.join(root, postfix)
+        logdir  = Path(root) / postfix
+        if not logdir.exists():
+            logdir.mkdir()
+
+        return logdir

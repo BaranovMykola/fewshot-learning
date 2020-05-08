@@ -1,12 +1,15 @@
 <component name="ProjectDictionaryState">
   <dictionary name="mbaranov">
     <words>
+      <w>asserter</w>
       <w>bilinear</w>
       <w>fewshots</w>
       <w>imagenet</w>
       <w>keras</w>
       <w>logdir</w>
+      <w>ndim</w>
       <w>notop</w>
+      <w>tensorboard</w>
       <w>unet</w>
       <w>upsample</w>
     </words>

@@ -4,7 +4,7 @@ import tensorflow as tf
 
 from src.dataset.fss import FssDataset
 from src.utils.memory import memory_limit
-from src.visualization.maks import register_colormap
+from src.visualization.colormap import register_colormap
 
 
 def show_sample(subplot, sample, title):
