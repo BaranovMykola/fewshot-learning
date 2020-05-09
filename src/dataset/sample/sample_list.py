@@ -1,9 +1,9 @@
 import itertools
 from typing import List, Iterable, Union
 
-from .category import Category
-from .category_list import CategoryList
-from .sample import Sample
+from src.dataset.category import Category
+from src.dataset.category.category_list import CategoryList
+from src.dataset.sample import Sample
 
 
 class SampleList:
@@ -29,7 +29,7 @@ class SampleList:
     def __repr__(self) -> str:
         return f'<#{len(self)} sample>'
 
-    def __getitem__(self, item: Union[Category, CategoryList]) -> 'SampleList':
+    def __getitem__(self, item: Union[Category, CategoryList, int, List[int]]) -> 'SampleList':
         if isinstance(item, CategoryList):
             return SampleList.merge(*[self[c] for c in item])
 
@@ -37,6 +37,21 @@ class SampleList:
             filtered_samples = [*filter(lambda x: x.cat_id == item.cat_id, self)]
             return SampleList(filtered_samples)
 
+        if isinstance(item, list):
+            filtered_items = [*filter(lambda s: s.sample_id in item, self)]
+            return SampleList(filtered_items)
+
+        filtered_items = [*filter(lambda s: s.sample_id == item, self)]
+
+        if len(filtered_items) != 1:
+            raise ValueError('Failed to extract sample due to invalid id')
+
+        return filtered_items[0]
+
     @property
     def ids(self) -> List[int]:
         return [s.sample_id for s in self]
+
+    @property
+    def cat_ids(self) -> List[int]:
+        return [s.cat_id for s in self]

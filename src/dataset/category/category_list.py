@@ -1,6 +1,6 @@
 from typing import List, Iterable, Union
 
-from .category import Category
+from src.dataset.category import Category
 
 
 class CategoryList:

@@ -5,7 +5,7 @@ def generate_test_samples(cats: int, samples: int):
         return {
             'image': f'image_{n}',
             'mask': f'mask_{n}',
-            'category_id': cats_id[n%3],
+            'category_id': cats_id[n%cats],
             'id': n
         }
 

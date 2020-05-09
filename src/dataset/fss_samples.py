@@ -1,9 +1,9 @@
 import json
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict
 
-from src.dataset.category_list import CategoryList
-from src.dataset.sample_list import SampleList
+from src.dataset.category.category_list import CategoryList
+from src.dataset.sample.sample_list import SampleList
 
 
 class FssSamples:

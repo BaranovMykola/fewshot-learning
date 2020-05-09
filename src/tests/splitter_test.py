@@ -1,10 +1,8 @@
 import itertools
 import unittest
-import json
 
-from src.dataset import FssSamples, Sample, SampleList, Category, CategoryList
+from src.dataset import FssSamples
 from src.dataset.dataset_splitter import NovelSplitter
-
 from src.tests.generate_test_samples import generate_test_samples
 
 

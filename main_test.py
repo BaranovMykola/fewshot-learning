@@ -1,6 +1,6 @@
 import unittest
 
-from src.tests import SplitterTest
+from src.tests import SplitterTest, FewShotDatasetTest
 
 
 if __name__ == '__main__':
