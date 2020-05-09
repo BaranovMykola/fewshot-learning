@@ -1,3 +1,5 @@
+import logging
+import random
 from typing import TYPE_CHECKING, Tuple
 from abc import ABCMeta, abstractmethod
 
@@ -7,8 +9,11 @@ if TYPE_CHECKING:
 
 class BaseSplitter(metaclass=ABCMeta):
 
-    def __init__(self, samples: 'FssSamples'):
-        self.samples = samples
+    def __init__(self, dataset: 'FssSamples', seed: int):
+        random.seed(seed)
+
+        self.dataset = dataset
+        self._logger = logging.getLogger(__name__)
 
     def split(self, val_ratio: float) -> Tuple:
         if val_ratio <= 0 or val_ratio >= 1:

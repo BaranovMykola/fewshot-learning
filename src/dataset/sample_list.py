@@ -16,3 +16,6 @@ class SampleList:
 
     def __iter__(self) -> Iterable[Sample]:
         return iter(self.samples)
+
+    def __repr__(self) -> str:
+        return f'<#{len(self)} sample>'

@@ -6,7 +6,7 @@ class Sample:
     def __init__(self, image_path_str: str, mask_path_str: str, category_id: int, sample_id: int):
         self.image_path_str = image_path_str
         self.mask_path_str = mask_path_str
-        self.category_id = category_id
+        self.cat_id = category_id
         self.sample_id = sample_id
 
     @classmethod
@@ -17,3 +17,14 @@ class Sample:
             category_id=json_data['category_id'],
             sample_id=json_data['id']
         )
+
+    def __repr__(self) -> str:
+        return str(self.to_json())
+
+    def to_json(self) -> Dict:
+        return {
+            'image': self.image_path_str,
+            'mask': self.mask_path_str,
+            'category_id': self.cat_id,
+            'id': self.sample_id
+        }

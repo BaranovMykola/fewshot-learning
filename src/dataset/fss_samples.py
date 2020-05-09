@@ -14,7 +14,7 @@ class FssSamples:
         self._samples = samples
         self._categories = categories
 
-        if not all([s.sample_id in self.categories.ids for s in self.samples]):
+        if not all([s.cat_id in self.categories.ids for s in self.samples]):
             raise RuntimeError('Some of images has no corresponded category in categories list')
 
 
@@ -37,14 +37,17 @@ class FssSamples:
     def __len__(self) -> int:
         return len(self.samples)
 
-    def category_name(self, cat_id: int) -> str:
-        cat_names = [x for x in self.categories if x['id'] == cat_id]
-        if len(cat_names) == 0:
-            raise ValueError(f'No such category: {cat_id}')
-        if len(cat_names) > 1:
-            raise ValueError(f'multiple categories found: {cat_names}')
+    def __repr__(self):
+        return f'<#{len(self.samples)} samples> ,#{len(self.categories)} categories>'
 
-        return cat_names[0]
+    # def category_name(self, cat_id: int) -> :
+    #     cat_names = [x for x in self.categories if x['id'] == cat_id]
+    #     if len(cat_names) == 0:
+    #         raise ValueError(f'No such category: {cat_id}')
+    #     if len(cat_names) > 1:
+    #         raise ValueError(f'multiple categories found: {cat_names}')
+    #
+    #     return cat_names[0]
 
     @property
     def samples(self) -> SampleList:

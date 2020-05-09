@@ -1,19 +1,11 @@
-import pickle
+from pathlib import Path
 
 import tensorflow as tf
-# import tqdm
 
-from src.dataset.fss import FssDataset
+from src.dataset import FssSamples
+from src.dataset.dataset_splitter import NovelSplitter
 
-dataset = FssDataset('./fewshots.csv')
+dataset = FssSamples.from_json_file(Path('./annotations/samples.json'))
+NovelSplitter(dataset, 123).split(0.2)
 
-# train = dataset.train().map(FssDataset.convert_to_example)
-# test = dataset.train().map(FssDataset.convert_to_example)
 
-with tf.io.TFRecordWriter('train.tfrecord') as writer:
-    for sample in dataset.train():
-        example = FssDataset.convert_to_example(*sample)
-        writer.write(example)
-
-# with open('./dataset.bin', 'wb+') as f:
-#     pickle.dump(dataset, f)
