@@ -6,6 +6,5 @@ from src.dataset import FssSamples
 from src.dataset.dataset_splitter import NovelSplitter
 
 dataset = FssSamples.from_json_file(Path('./annotations/samples.json'))
-NovelSplitter(dataset, 123).split(0.2)
-
-
+train, test = NovelSplitter(dataset, 123).split(0.2)
+pass

@@ -1,6 +1,8 @@
 import random
 from typing import Tuple, List
 
+from src.dataset import FssSamples
+
 from .base_splitter import BaseSplitter
 
 
@@ -12,6 +14,14 @@ class NovelSplitter(BaseSplitter):
 
         train_cats = self.dataset.categories[train_cats_id]
         test_cats = self.dataset.categories[val_cats_id]
+
+        train_samples = self.dataset.samples[train_cats]
+        test_samples = self.dataset.samples[test_cats]
+
+        train = FssSamples(train_samples, train_cats)
+        test = FssSamples(test_samples, test_cats)
+
+        return train, test
 
 
     def _split_classes_count(self, val_ratio: float) -> Tuple[int, int]:
@@ -28,7 +38,7 @@ class NovelSplitter(BaseSplitter):
         return train_cats_counts, val_cats_count
 
     def _extract_train_val_ids(self, train_cats_count: int) -> Tuple[List[int], List[int]]:
-        shuffled_categories = random.sample(self.dataset.categories.ids)
+        shuffled_categories = random.sample(self.dataset.categories.ids, k=len(self.dataset.categories))
         train_cats_id = shuffled_categories[:train_cats_count]
         val_cats_id = shuffled_categories[train_cats_count:]
 
