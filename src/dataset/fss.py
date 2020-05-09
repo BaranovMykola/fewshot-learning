@@ -4,6 +4,8 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 
+from src.dataset.feature_serializers import _bytes_feature, tensor_feature
+
 
 class FssDataset:
 
@@ -137,3 +139,21 @@ class FssDataset:
     @staticmethod
     def reshape(q, s, m, _, __):
         return (q, s), m
+
+    @staticmethod
+    def convert_to_example(q: tf.Tensor,
+                           s: tf.Tensor,
+                           label: tf.Tensor,
+                           classname: tf.Tensor,
+                           class_id: tf.Tensor) -> bytes:
+        feature_dict = {
+            'query': tensor_feature(q),
+            'support': tensor_feature(s),
+            'label': tensor_feature(label),
+            'classname': tensor_feature(classname),
+            'class_id': tensor_feature(class_id),
+        }
+
+        feature = tf.train.Features(feature=feature_dict)
+        example_proto = tf.train.Example(features=feature)
+        return example_proto.SerializeToString()

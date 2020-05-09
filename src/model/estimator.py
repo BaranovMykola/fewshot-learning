@@ -46,14 +46,14 @@ class Estimator:
     def callbacks(self):
         tb_cb = tf.keras.callbacks.TensorBoard(log_dir=self.logdir)
         mcb = SampleVisualizerCallback(self.test_data_raw, self.logdir, steps=5)
-        f1_saver = tf.keras.callbacks.ModelCheckpoint(str(self.logdir),
+        f1_saver = tf.keras.callbacks.ModelCheckpoint(str(self.logdir / 'best_f1.ckpt'),
                                                       monitor='val_f1_score',
                                                       verbose=0,
                                                       save_best_only=True,
                                                       save_weights_only=True,
                                                       mode='max',
                                                       save_freq='epoch')
-        iou_saver = tf.keras.callbacks.ModelCheckpoint(str(self.logdir), monitor='val_io_u', verbose=0,
+        iou_saver = tf.keras.callbacks.ModelCheckpoint(str(self.logdir / 'best_iou.ckpt'), monitor='val_io_u', verbose=0,
                                                        save_best_only=True,
                                                        save_weights_only=True, mode='max', save_freq='epoch')
         return [tb_cb, mcb, f1_saver, iou_saver]
