@@ -10,7 +10,11 @@ def main():
     if is_gpu():
         setup_gpu()
 
-    estimator = Estimator(Model(), Path('./dataset.bin'), 2)
+    estimator = Estimator(Model(),
+                          train_dataset='./datasets/novel/train.tfrecord',
+                          val_dataset='./datasets/novel/val.tfrecord',
+                          batch_size=2,
+                          data_root='./Data')
     estimator.compile()
     estimator.train()
 
