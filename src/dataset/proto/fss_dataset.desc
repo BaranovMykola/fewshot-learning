@@ -1,10 +1,0 @@
-
-Û
-#src/dataset/proto/fss_dataset.proto"I
-MaskedImage
-
-image_path (	R	imagePath
-	mask_path (	RmaskPath"a
-FewShotSample(
-query_image_path (	RqueryImagePath&
-support (2.MaskedImageRsupportbproto3

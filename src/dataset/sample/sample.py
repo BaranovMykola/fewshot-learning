@@ -1,10 +1,5 @@
 from typing import Dict
 
-import tensorflow as tf
-
-from src.dataset.tfrecords import bytes_feature, int64_feature
-from src.dataset.proto import fss_dataset_pb2 as fss_proto
-
 
 class Sample:
 

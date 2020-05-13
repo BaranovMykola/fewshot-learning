@@ -3,7 +3,7 @@ from typing import Iterable
 
 from src.dataset import FssSamples
 
-from .sample import FewShotSample
+from .sample import FewShotSampleStruct
 
 
 class FewShotDataset:
@@ -12,7 +12,7 @@ class FewShotDataset:
         random.seed(seed)
         self.dataset = dataset
 
-    def split_to_query_support(self, k: int) -> Iterable[FewShotSample]:
+    def split_to_query_support(self, k: int) -> Iterable[FewShotSampleStruct]:
         all_categories = self.dataset.categories
 
         for cat in all_categories:
@@ -31,4 +31,4 @@ class FewShotDataset:
             query = sample_of_cat[query_ids]
 
             for query_sample in query:
-                yield FewShotSample(query_sample, support)
+                yield FewShotSampleStruct(query_sample, support)

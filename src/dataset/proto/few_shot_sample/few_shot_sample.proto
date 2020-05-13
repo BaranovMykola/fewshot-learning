@@ -8,5 +8,6 @@ message MaskedImage {
 message FewShotSample {
   string query_image_path = 1;
   repeated MaskedImage support = 2;
+  string gt_mask_path = 3;
 }
 

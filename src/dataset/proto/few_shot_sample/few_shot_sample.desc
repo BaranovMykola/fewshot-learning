@@ -1,0 +1,12 @@
+
+’
+7src/dataset/proto/few_shot_sample/few_shot_sample.proto"I
+MaskedImage
+
+image_path (	R	imagePath
+	mask_path (	RmaskPath"ƒ
+FewShotSample(
+query_image_path (	RqueryImagePath&
+support (2.MaskedImageRsupport 
+gt_mask_path (	R
+gtMaskPathbproto3
