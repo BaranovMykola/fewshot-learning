@@ -1,6 +1,8 @@
 import itertools
 from typing import List, Iterable, Union
 
+import tensorflow as tf
+
 from src.dataset.category import Category
 from src.dataset.category.category_list import CategoryList
 from src.dataset.sample import Sample
@@ -55,3 +57,12 @@ class SampleList:
     @property
     def cat_ids(self) -> List[int]:
         return [s.cat_id for s in self]
+
+    @property
+    def tf_feature_list(self):
+        features = [s.tf_features for s in self]
+        tf_features = tf.train.FeatureList(feature=features)
+        return tf.train.SequenceExample(context=tf_features)
+        # return
+        # return tf.train.FeatureLists(feature_list={'f1': features[0]})
+

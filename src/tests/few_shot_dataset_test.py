@@ -4,7 +4,7 @@ from typing import List
 
 from src.dataset import FssSamples
 from src.dataset.few_shot_dataset import FewShotDataset
-from src.dataset.sample import QuerySupportSample
+from src.dataset.sample import FewShotSample
 from src.tests.generate_test_samples import generate_test_samples
 
 
@@ -20,7 +20,7 @@ class FewShotDatasetTest(unittest.TestCase):
         for k, seed in itertools.product(ks, seeds):
             fw = FewShotDataset(self.dataset, seed)
 
-            fw_sample_list: List[QuerySupportSample] = [*fw.split_to_query_support(k)]
+            fw_sample_list: List[FewShotSample] = [*fw.split_to_query_support(k)]
             for fw_sample in fw_sample_list:
                 self.assertEqual(len(fw_sample.support), k, f'Support len is not {k}')
 

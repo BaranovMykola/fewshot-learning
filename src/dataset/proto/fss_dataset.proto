@@ -1,0 +1,12 @@
+syntax="proto3";
+
+message MaskedImage {
+  string image_path = 1;
+  string mask_path = 2;
+}
+
+message FewShotSample {
+  string query_image_path = 1;
+  repeated MaskedImage support = 2;
+}
+

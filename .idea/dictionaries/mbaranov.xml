@@ -10,6 +10,7 @@
       <w>ndim</w>
       <w>notop</w>
       <w>tensorboard</w>
+      <w>tfrecord</w>
       <w>unet</w>
       <w>upsample</w>
     </words>
